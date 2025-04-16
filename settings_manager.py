@@ -7,8 +7,7 @@ default_settings = {
     "enabled": False,
     "idle_minutes": 30,
     "autostart": False,
-    "close_behavior": "minimize" or "exit"
-
+    "close_behavior": None
 }
 
 def load_settings():
@@ -23,3 +22,14 @@ def load_settings():
 def save_settings(settings):
     with open(SETTINGS_FILE, "w") as f:
         json.dump(settings, f, indent=4)
+
+
+def reset_settings():
+    if os.path.exists(SETTINGS_FILE):
+        os.remove(SETTINGS_FILE)
+
+    # Also delete startup shortcut
+    startup_path = os.path.join(os.getenv('APPDATA'), r'Microsoft\Windows\Start Menu\Programs\Startup')
+    shortcut_path = os.path.join(startup_path, "LappyTappyUtils.lnk")
+    if os.path.exists(shortcut_path):
+        os.remove(shortcut_path)
