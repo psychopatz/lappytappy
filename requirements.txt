@@ -5,6 +5,7 @@ winshell
 pystray
 pillow
 CTkMessagebox
-win10toast-click
+win10toast
+pygame
 
 pyinstaller

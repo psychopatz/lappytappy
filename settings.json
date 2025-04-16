@@ -1,5 +1,5 @@
 {
     "enabled": true,
-    "idle_minutes": 12,
+    "idle_minutes": 1,
     "autostart": false
 }

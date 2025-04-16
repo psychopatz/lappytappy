@@ -31,6 +31,7 @@ class LappyTappyApp(ctk.CTk):
 
         self.settings = load_settings()
         self.monitoring = False
+        self.monitor_thread = None
         self.tray_icon = None
         self.idle_limit = self.settings["idle_minutes"] * 60
         self.close_behavior = self.settings.get("close_behavior", None)
@@ -75,19 +76,24 @@ class LappyTappyApp(ctk.CTk):
         save_settings(self.settings)
 
         self.idle_limit = valid_timeout * 60
+
+        # Stop previous monitor loop
         self.monitoring = False
-        time.sleep(0.1)
+        if self.monitor_thread and self.monitor_thread.is_alive():
+            self.monitor_thread.join(timeout=1)
 
         if self.enabled.get():
             self.monitoring = True
-            threading.Thread(
+            self.monitor_thread = threading.Thread(
                 target=monitor_loop,
                 args=(self.idle_limit, lambda: self.monitoring, self.update_status),
                 daemon=True
-            ).start()
+            )
+            self.monitor_thread.start()
             show_notification("LappyTappy", "Monitoring (re)started.")
         else:
             show_notification("LappyTappy", "Monitoring stopped.")
+
 
 
     def get_valid_timeout(self):

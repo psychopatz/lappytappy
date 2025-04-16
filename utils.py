@@ -2,6 +2,7 @@ import ctypes
 import threading
 import time
 from win10toast import ToastNotifier
+import pygame
 
 _notifier = ToastNotifier()
 
@@ -25,3 +26,19 @@ def show_notification(title, message, duration=5):
             print(f"[LappyTappy] ⚠️ Toast error: {e}")
 
     threading.Thread(target=safe_toast, daemon=True).start()
+
+
+def play_beep_warning():
+    try:
+        pygame.mixer.init()
+        sound = pygame.mixer.Sound("media/beep.ogg")
+        volumes = [0.2, 0.4, 0.6, 0.8, 1.0]  # Gradual volume increase
+
+        for v in volumes:
+            sound.set_volume(v)
+            sound.play()
+            pygame.time.wait(1000)  # Wait 1 second before next beep
+    except Exception as e:
+        print(f"[LappyTappy] ⚠️ Beep failed: {e}")
+    finally:
+        pygame.mixer.quit()
