@@ -7,7 +7,8 @@ default_settings = {
     "enabled": False,
     "idle_minutes": 30,
     "autostart": False,
-    "close_behavior": "minimize" or "exit"
+    "close_behavior": "minimize" or "exit",
+    "action": "shutdown"
 
 }
 

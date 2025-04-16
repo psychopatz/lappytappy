@@ -1,5 +1,8 @@
 {
     "enabled": true,
     "idle_minutes": 1,
-    "autostart": false
+    "autostart": false,
+    "close_behavior": "minimize",
+    "action": "sleep",
+    "theme": "System"
 }

@@ -12,15 +12,11 @@ from settings_manager import load_settings, save_settings, reset_settings
 from monitor import monitor_loop
 from utils import get_idle_time, show_notification
 
-
-
-
 def center_popup(popup, parent):
     popup.update_idletasks()
     x = parent.winfo_x() + (parent.winfo_width() // 2) - (popup.winfo_width() // 2)
     y = parent.winfo_y() + (parent.winfo_height() // 2) - (popup.winfo_height() // 2)
     popup.geometry(f"+{x}+{y}")
-
 
 class LappyTappyApp(ctk.CTk):
     def __init__(self):
@@ -30,6 +26,8 @@ class LappyTappyApp(ctk.CTk):
         self.resizable(False, False)
 
         self.settings = load_settings()
+        ctk.set_appearance_mode(self.settings.get("theme", "System"))
+
         self.monitoring = False
         self.monitor_thread = None
         self.tray_icon = None
@@ -68,16 +66,13 @@ class LappyTappyApp(ctk.CTk):
 
     def apply_settings(self):
         valid_timeout = self.get_valid_timeout()
-
         self.settings.update({
             "enabled": self.enabled.get(),
             "idle_minutes": valid_timeout
         })
         save_settings(self.settings)
-
         self.idle_limit = valid_timeout * 60
 
-        # Stop previous monitor loop
         self.monitoring = False
         if self.monitor_thread and self.monitor_thread.is_alive():
             self.monitor_thread.join(timeout=1)
@@ -93,8 +88,6 @@ class LappyTappyApp(ctk.CTk):
             show_notification("LappyTappy", "Monitoring (re)started.")
         else:
             show_notification("LappyTappy", "Monitoring stopped.")
-
-
 
     def get_valid_timeout(self):
         try:
@@ -205,21 +198,24 @@ class LappyTappyApp(ctk.CTk):
     def open_settings_popup(self):
         popup = ctk.CTkToplevel(self)
         popup.title("Settings")
-        popup.geometry("300x280")
+        popup.geometry("320x420")
         popup.resizable(False, False)
         popup.grab_set()
         center_popup(popup, self)
 
+        # ==== Theme ====
         ctk.CTkLabel(popup, text="Theme:").pack(pady=(20, 5))
+        theme_options = ["System", "Light", "Dark"]
+        theme_var = ctk.StringVar(value=self.settings.get("theme", "System"))
 
         def change_theme(value):
             ctk.set_appearance_mode(value)
+            theme_var.set(value)
 
-        theme_options = ["System", "Light", "Dark"]
-        theme_dropdown = ctk.CTkOptionMenu(popup, values=theme_options, command=change_theme)
-        theme_dropdown.set("System")
+        theme_dropdown = ctk.CTkOptionMenu(popup, values=theme_options, variable=theme_var, command=change_theme)
         theme_dropdown.pack()
 
+        # ==== Autostart ====
         autostart_var = ctk.BooleanVar(value=self.is_autostart_enabled())
 
         def toggle_autostart():
@@ -227,7 +223,36 @@ class LappyTappyApp(ctk.CTk):
 
         ctk.CTkCheckBox(popup, text="Run on System Startup", variable=autostart_var, command=toggle_autostart).pack(pady=15)
 
-        ctk.CTkButton(popup, text="Reset to Default", fg_color="red", hover_color="#aa0000", command=self.confirm_reset).pack(pady=(20, 10))
+        # ==== Action ====
+        ctk.CTkLabel(popup, text="Action When Timer Ends:").pack(pady=(10, 5))
+        action_options = ["shutdown", "lock", "sleep", "logout", "hibernate"]
+        action_var = ctk.StringVar(value=self.settings.get("action", "shutdown"))
+
+        def is_hibernate_supported():
+            try:
+                result = os.popen("powercfg /a").read().lower()
+                return "hibernate" in result and "not available" not in result
+            except:
+                return False
+
+        if not is_hibernate_supported():
+            action_options.remove("hibernate")
+            if action_var.get() == "hibernate":
+                action_var.set("shutdown")
+            ctk.CTkLabel(popup, text="Hibernate not supported", text_color="gray").pack()
+
+        action_dropdown = ctk.CTkOptionMenu(popup, values=action_options, variable=action_var)
+        action_dropdown.pack()
+
+        # ==== Buttons ====
+        def apply_all_settings():
+            self.settings["action"] = action_var.get()
+            self.settings["theme"] = theme_var.get()
+            save_settings(self.settings)
+            popup.destroy()
+
+        ctk.CTkButton(popup, text="Apply", command=apply_all_settings).pack(pady=(20, 5))
+        ctk.CTkButton(popup, text="Reset to Default", fg_color="red", hover_color="#aa0000", command=self.confirm_reset).pack(pady=(5, 10))
 
     def confirm_reset(self):
         confirm = ctk.CTkToplevel(self)
