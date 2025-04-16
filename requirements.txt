@@ -4,5 +4,7 @@ pywin32
 winshell
 pystray
 pillow
+CTkMessagebox
+win10toast-click
 
 pyinstaller

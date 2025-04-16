@@ -1,5 +1,6 @@
 {
     "enabled": true,
     "idle_minutes": 30,
-    "autostart": true
+    "autostart": false,
+    "close_behavior": "minimize"
 }
